@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Options Spread Strategy Analyzer</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glow-green { box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); }
+        .glow-red { box-shadow: 0 0 20px rgba(239, 68, 68, 0.3); }
+        .glow-blue { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+        .pulse-dot {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .code-block {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-white font-sans">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                📊 Options Spread Strategy Analyzer
+            </h1>
+            <p class="text-gray-400 mt-2">Black-Scholes Based Credit Spread Selection with Dynamic Chain Builder</p>
+        </header>
+
+        <!-- Script Analysis Section -->
+        <div class="card rounded-xl p-6 mb-8">
+            <h2 class="text-2xl font-bold text-blue-400 mb-4">🔍 Script Analysis Overview</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-green-400 mb-2">What This Script Does:</h3>
+                    <ul class="space-y-2 text-gray-300">
+                        <li>✅ <strong>Dynamic Chain Builder:</strong> Generates 8 strikes around ATM based on spot price and strike gap</li>
+                        <li>✅ <strong>Volatility Regime Detection:</strong> Uses 60-day rolling realized volatility to filter trades</li>
+                        <li>✅ <strong>IV Edge Calculation:</strong> Compares implied volatility to realized volatility</li>
+                        <li>✅ <strong>Greeks Computation:</strong> Calculates Delta, Gamma, and Probability ITM</li>
+                        <li>✅ <strong>Risk-Based Sizing:</strong> Scales position based on capital and regime</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold text-yellow-400 mb-2">Key Improvements:</h3>
+                    <ul class="space-y-2 text-gray-300">
+                        <li>📈 <strong>Spot-Based Strikes:</strong> ATM = round(spot / gap) × gap</li>
+                        <li>📐 <strong>PUT Chain:</strong> ATM+3×gap down to ATM-4×gap</li>
+                        <li>📊 <strong>CALL Chain:</strong> ATM-3×gap up to ATM+4×gap</li>
+                        <li>🎯 <strong>Larger Capital:</strong> ₹50 Lakhs with 1% risk per trade</li>
+                        <li>🔧 <strong>Defined Risk:</strong> Credit spreads with capped loss</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Parameters -->
+        <div class="card rounded-xl p-6 mb-8">
+            <h3 class="text-xl font-bold text-cyan-400 mb-4">⚙️ Input Parameters</h3>
+            <div class="grid md:grid-cols-5 gap-4">
+                <div>
+                    <label class="block text-gray-400 text-sm mb-1">Symbol</label>
+                    <input type="text" id="symbol" value="INFY.NS" class="w-full bg-gray-800 rounded px-3 py-2 text-white">
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-1">Spot Price</label>
+                    <input type="number" id="spotPrice" value="1700" class="w-full bg-gray-800 rounded px-3 py-2 text-white">
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-1">Strike Gap</label>
+                    <input type="number" id="strikeGap" value="20" class="w-full bg-gray-800 rounded px-3 py-2 text-white">
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-1">Days to Expiry</label>
+                    <input type="number" id="daysToExpiry" value="35" class="w-full bg-gray-800 rounded px-3 py-2 text-white">
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-1">Lot Size</label>
+                    <input type="number" id="lotSize" value="400" class="w-full bg-gray-800 rounded px-3 py-2 text-white">
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-1">Risk-Free Rate</label>
+                    <input type="number" id="riskFreeRate" value="0.06" step="0.01" class="w-full bg-gray-800 rounded px-3 py-2 text-white">
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-1">Total Capital (₹)</label>
+                    <input type="number" id="totalCapital" value="5000000" class="w-full bg-gray-800 rounded px-3 py-2 text-white">
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-1">Risk Per Trade</label>
+                    <input type="number" id="riskPerTrade" value="0.01" step="0.01" class="w-full bg-gray-800 rounded px-3 py-2 text-white">
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-1">Fair Volatility</label>
+                    <input type="number" id="fairVol" value="0.28" step="0.01" class="w-full bg-gray-800 rounded px-3 py-2 text-white">
+                </div>
+                <div>
+                    <label class="block text-gray-400 text-sm mb-1">ATM Strike</label>
+                    <input type="text" id="atmStrike" value="-" class="w-full bg-gray-700 rounded px-3 py-2 text-cyan-400 font-bold" readonly>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hardcoded Premiums -->
+        <div class="card rounded-xl p-6 mb-8">
+            <h3 class="text-xl font-bold text-orange-400 mb-4">💰 Hardcoded Premiums (8 strikes)</h3>
+            <div class="grid grid-cols-8 gap-2">
+                <div>
+                    <label class="block text-gray-500 text-xs mb-1">Strike 1</label>
+                    <input type="number" id="prem0" value="19.00" step="0.5" class="w-full bg-gray-800 rounded px-2 py-2 text-white text-sm">
+                </div>
+                <div>
+                    <label class="block text-gray-500 text-xs mb-1">Strike 2</label>
+                    <input type="number" id="prem1" value="25.00" step="0.5" class="w-full bg-gray-800 rounded px-2 py-2 text-white text-sm">
+                </div>
+                <div>
+                    <label class="block text-gray-500 text-xs mb-1">Strike 3</label>
+                    <input type="number" id="prem2" value="32.50" step="0.5" class="w-full bg-gray-800 rounded px-2 py-2 text-white text-sm">
+                </div>
+                <div>
+                    <label class="block text-gray-500 text-xs mb-1">Strike 4</label>
+                    <input type="number" id="prem3" value="42.00" step="0.5" class="w-full bg-gray-800 rounded px-2 py-2 text-white text-sm">
+                </div>
+                <div>
+                    <label class="block text-gray-500 text-xs mb-1">Strike 5</label>
+                    <input type="number" id="prem4" value="52.55" step="0.5" class="w-full bg-gray-800 rounded px-2 py-2 text-white text-sm">
+                </div>
+                <div>
+                    <label class="block text-gray-500 text-xs mb-1">Strike 6</label>
+                    <input type="number" id="prem5" value="64.30" step="0.5" class="w-full bg-gray-800 rounded px-2 py-2 text-white text-sm">
+                </div>
+                <div>
+                    <label class="block text-gray-500 text-xs mb-1">Strike 7</label>
+                    <input type="number" id="prem6" value="79.00" step="0.5" class="w-full bg-gray-800 rounded px-2 py-2 text-white text-sm">
+                </div>
+                <div>
+                    <label class="block text-gray-500 text-xs mb-1">Strike 8</label>
+                    <input type="number" id="prem7" value="96.00" step="0.5" class="w-full bg-gray-800 rounded px-2 py-2 text-white text-sm">
+                </div>
+            </div>
+            <p class="text-gray-500 text-xs mt-2">* Premiums are ordered from furthest OTM to deepest ITM for the selected option side</p>
+        </div>
+
+        <!-- Bias and Side Selection -->
+        <div class="grid md:grid-cols-2 gap-4 mb-8">
+            <div class="card rounded-xl p-4">
+                <label class="block text-gray-400 text-sm mb-2">Price Bias</label>
+                <div class="flex gap-4">
+                    <button onclick="setBias('BULLISH')" id="btnBullish" class="flex-1 py-2 rounded-lg bg-gray-700 hover:bg-green-600 transition">🐂 BULLISH</button>
+                    <button onclick="setBias('BEARISH')" id="btnBearish" class="flex-1 py-2 rounded-lg bg-red-600 hover:bg-red-500 transition">🐻 BEARISH</button>
+                </div>
+            </div>
+            <div class="card rounded-xl p-4">
+                <label class="block text-gray-400 text-sm mb-2">Option Side</label>
+                <div class="flex gap-4">
+                    <button onclick="setSide('CALL')" id="btnCall" class="flex-1 py-2 rounded-lg bg-gray-700 hover:bg-blue-600 transition">📈 CALL</button>
+                    <button onclick="setSide('PUT')" id="btnPut" class="flex-1 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 transition">📉 PUT</button>
+                </div>
+            </div>
+        </div>
+
+        <button onclick="runAnalysis()" class="w-full mb-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 py-4 rounded-xl font-bold text-lg transition transform hover:scale-[1.02]">
+            🚀 Run Analysis
+        </button>
+
+        <!-- Chain Builder Visualization -->
+        <div id="chainBuilderPanel" class="card rounded-xl p-6 mb-8 hidden">
+            <h2 class="text-2xl font-bold text-cyan-400 mb-4">🔧 Option Chain Builder</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="p-4 bg-gray-800/50 rounded-lg">
+                    <h4 class="font-bold text-yellow-400 mb-2">Chain Construction Logic:</h4>
+                    <div class="code-block bg-black/50 p-3 rounded text-green-300">
+                        <p>ATM = round(spot / gap) × gap</p>
+                        <p class="mt-2" id="chainFormula"></p>
+                    </div>
+                </div>
+                <div class="p-4 bg-gray-800/50 rounded-lg">
+                    <h4 class="font-bold text-yellow-400 mb-2">Generated Strikes:</h4>
+                    <div id="strikesList" class="flex flex-wrap gap-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Volatility Regime Panel -->
+        <div id="volRegimePanel" class="card rounded-xl p-6 mb-8 hidden">
+            <h2 class="text-2xl font-bold text-purple-400 mb-4">📊 Volatility Regime Analysis</h2>
+            <div class="grid md:grid-cols-4 gap-4">
+                <div class="text-center p-4 bg-gray-800/50 rounded-lg">
+                    <p class="text-gray-400 text-sm">Fair Volatility</p>
+                    <p id="displayFairVol" class="text-2xl font-bold text-blue-400">-</p>
+                </div>
+                <div class="text-center p-4 bg-gray-800/50 rounded-lg">
+                    <p class="text-gray-400 text-sm">RV Mean (60d)</p>
+                    <p id="displayRvMean" class="text-2xl font-bold text-yellow-400">-</p>
+                </div>
+                <div class="text-center p-4 bg-gray-800/50 rounded-lg">
+                    <p class="text-gray-400 text-sm">Vol Z-Score</p>
+                    <p id="displayZScore" class="text-2xl font-bold text-cyan-400">-</p>
+                </div>
+                <div id="regimeCard" class="text-center p-4 bg-gray-800/50 rounded-lg">
+                    <p class="text-gray-400 text-sm">Regime</p>
+                    <p id="displayRegime" class="text-2xl font-bold">-</p>
+                </div>
+            </div>
+            <div class="mt-4 p-4 bg-gray-800/30 rounded-lg">
+                <p class="text-gray-300" id="regimeExplanation"></p>
+            </div>
+        </div>
+
+        <!-- Option Chain Table -->
+        <div id="chainPanel" class="card rounded-xl p-6 mb-8 hidden">
+            <h2 class="text-2xl font-bold text-green-400 mb-4">📋 Option Chain Analytics</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="border-b border-gray-700">
+                        <tr>
+                            <th class="py-3 px-4">Strike</th>
+                            <th class="py-3 px-4">Moneyness</th>
+                            <th class="py-3 px-4">Premium</th>
+                            <th class="py-3 px-4">IV</th>
+                            <th class="py-3 px-4">IV Edge</th>
+                            <th class="py-3 px-4">Delta</th>
+                            <th class="py-3 px-4">Gamma</th>
+                            <th class="py-3 px-4">Prob ITM</th>
+                            <th class="py-3 px-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="chainTable">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Trade Setup -->
+        <div id="tradePanel" class="card rounded-xl p-6 mb-8 hidden">
+            <h2 class="text-2xl font-bold text-yellow-400 mb-4">🎯 Recommended Trade Setup</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <div class="space-y-4">
+                        <div class="p-4 bg-gray-800/50 rounded-lg border-l-4 border-blue-500">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">Symbol</span>
+                                <span id="tradeSymbol" class="font-bold text-blue-400">-</span>
+                            </div>
+                            <div class="flex justify-between mt-2">
+                                <span class="text-gray-400">Bias</span>
+                                <span id="tradeBias" class="font-bold">-</span>
+                            </div>
+                            <div class="flex justify-between mt-2">
+                                <span class="text-gray-400">Option Side</span>
+                                <span id="tradeOptionSide" class="font-bold">-</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between p-3 bg-red-900/30 rounded-lg border border-red-500/30">
+                            <span>Sell Strike</span>
+                            <span id="sellStrike" class="font-bold text-red-400">-</span>
+                        </div>
+                        <div class="flex justify-between p-3 bg-green-900/30 rounded-lg border border-green-500/30">
+                            <span>Buy Strike</span>
+                            <span id="buyStrike" class="font-bold text-green-400">-</span>
+                        </div>
+                        <div class="flex justify-between p-3 bg-gray-800/50 rounded-lg">
+                            <span>Net Premium</span>
+                            <span id="netPremium" class="font-bold text-blue-400">-</span>
+                        </div>
+                        <div class="flex justify-between p-3 bg-gray-800/50 rounded-lg">
+                            <span>Spread Width</span>
+                            <span id="spreadWidth" class="font-bold">-</span>
+                        </div>
+                        <div class="flex justify-between p-3 bg-gray-800/50 rounded-lg">
+                            <span>Contracts</span>
+                            <span id="contracts" class="font-bold text-purple-400">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-6 bg-green-900/30 rounded-xl border border-green-500/30 text-center glow-green">
+                            <p class="text-gray-400 text-sm">Max Profit (₹)</p>
+                            <p id="maxProfit" class="text-3xl font-bold text-green-400">-</p>
+                        </div>
+                        <div class="p-6 bg-red-900/30 rounded-xl border border-red-500/30 text-center glow-red">
+                            <p class="text-gray-400 text-sm">Max Loss (₹)</p>
+                            <p id="maxLoss" class="text-3xl font-bold text-red-400">-</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-4 bg-gray-800/50 rounded-lg">
+                        <p class="text-gray-400 text-sm mb-2">Risk/Reward Ratio</p>
+                        <div class="flex items-center gap-4">
+                            <div class="flex-1 h-4 bg-gray-700 rounded-full overflow-hidden">
+                                <div id="rrBar" class="h-full bg-gradient-to-r from-green-500 to-blue-500" style="width: 50%"></div>
+                            </div>
+                            <span id="rrRatio" class="font-bold text-lg">-</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-4 bg-blue-900/30 rounded-lg border border-blue-500/30">
+                        <p class="text-gray-400 text-sm">Capital Allocation</p>
+                        <div class="flex justify-between mt-2">
+                            <span class="text-gray-400">Capital at Risk</span>
+                            <span id="capitalAtRisk" class="font-bold text-cyan-400">-</span>
+                        </div>
+                        <div class="flex justify-between mt-1">
+                            <span class="text-gray-400">Vol Scaler</span>
+                            <span id="volScaler" class="font-bold text-yellow-400">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terminal Output -->
+        <div id="terminalPanel" class="card rounded-xl p-6 mb-8 hidden">
+            <h2 class="text-2xl font-bold text-green-400 mb-4">💻 Terminal Output</h2>
+            <pre id="terminalOutput" class="bg-black/80 p-4 rounded-lg text-green-400 font-mono text-sm overflow-x-auto"></pre>
+        </div>
+
+        <!-- Payoff Chart -->
+        <div id="chartPanel" class="card rounded-xl p-6 mb-8 hidden">
+            <h2 class="text-2xl font-bold text-cyan-400 mb-4">📈 Payoff Diagram at Expiry</h2>
+            <canvas id="payoffChart" height="300"></canvas>
+        </div>
+
+        <!-- Code Breakdown -->
+        <div class="card rounded-xl p-6 mb-8">
+            <h2 class="text-2xl font-bold text-orange-400 mb-4">🧠 Code Logic Breakdown</h2>
+            <div class="space-y-4">
+                <div class="p-4 bg-gray-800/50 rounded-lg border-l-4 border-cyan-500">
+                    <h3 class="font-bold text-cyan-400">1. Option Chain Builder (NEW)</h3>
+                    <p class="text-gray-300 text-sm mt-1">Dynamically generates 8 strikes around ATM. For PUTs: starts from ATM+3×gap down to ATM-4×gap. For CALLs: starts from ATM-3×gap up to ATM+4×gap. This ensures proper OTM to ITM ordering.</p>
+                    <code class="block mt-2 text-xs text-green-300 bg-black/30 p-2 rounded">atm = round(spot / gap) * gap<br>PUT: [atm+3g, atm+2g, atm+g, atm, atm-g, atm-2g, atm-3g, atm-4g]</code>
+                </div>
+                <div class="p-4 bg-gray-800/50 rounded-lg border-l-4 border-blue-500">
+                    <h3 class="font-bold text-blue-400">2. Volatility Regime Filter</h3>
+                    <p class="text-gray-300 text-sm mt-1">Calculates Z-score of current volatility vs 60-day rolling mean. If Z > 0.5: FAVORABLE (full risk), Z > 0: NEUTRAL (60% risk), else: NO TRADE.</p>
+                    <code class="block mt-2 text-xs text-green-300 bg-black/30 p-2 rounded">vol_z = (fair_vol - rv_mean) / rv_std</code>
+                </div>
+                <div class="p-4 bg-gray-800/50 rounded-lg border-l-4 border-purple-500">
+                    <h3 class="font-bold text-purple-400">3. Black-Scholes Pricing</h3>
+                    <p class="text-gray-300 text-sm mt-1">Computes theoretical option price, delta, gamma, and probability ITM using classic BS formula.</p>
+                    <code class="block mt-2 text-xs text-green-300 bg-black/30 p-2 rounded">d1 = (ln(S/K) + (r + 0.5σ²)T) / (σ√T)</code>
+                </div>
+                <div class="p-4 bg-gray-800/50 rounded-lg border-l-4 border-yellow-500">
+                    <h3 class="font-bold text-yellow-400">4. Implied Volatility Extraction</h3>
+                    <p class="text-gray-300 text-sm mt-1">Uses Brent's method to solve for IV that makes BS price equal market price.</p>
+                    <code class="block mt-2 text-xs text-green-300 bg-black/30 p-2 rounded">brentq(λx: bs_price(S,K,T,r,x) - market_price, 0.001, 5)</code>
+                </div>
+                <div class="p-4 bg-gray-800/50 rounded-lg border-l-4 border-green-500">
+                    <h3 class="font-bold text-green-400">5. IV Edge Strategy</h3>
+                    <p class="text-gray-300 text-sm mt-1">Sell the option with highest IV Edge (most overpriced). Buy the option with lowest IV Edge (least overpriced).</p>
+                    <code class="block mt-2 text-xs text-green-300 bg-black/30 p-2 rounded">sell_leg = chain.sort_values("IV Edge", ascending=False).iloc[0]</code>
+                </div>
+                <div class="p-4 bg-gray-800/50 rounded-lg border-l-4 border-red-500">
+                    <h3 class="font-bold text-red-400">6. Capital Allocation</h3>
+                    <p class="text-gray-300 text-sm mt-1">Risk-based sizing with ₹50 Lakhs capital and 1% risk per trade. Scaled by vol regime.</p>
+                    <code class="block mt-2 text-xs text-green-300 bg-black/30 p-2 rounded">capital_at_risk = TOTAL_CAPITAL × RISK_PER_TRADE × vol_scaler<br>contracts = int(capital_at_risk // max_loss)</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center text-gray-500 text-sm mt-8">
+            <p>⚠️ This is for educational purposes only. Options trading involves significant risk.</p>
+        </footer>
+    </div>
+
+    <script>
+        // State
+        let state = {
+            bias: 'BEARISH',
+            side: 'PUT'
+        };
+
+        let payoffChart = null;
+
+        function setBias(bias) {
+            state.bias = bias;
+            document.getElementById('btnBullish').className = `flex-1 py-2 rounded-lg transition ${bias === 'BULLISH' ? 'bg-green-600' : 'bg-gray-700 hover:bg-green-600'}`;
+            document.getElementById('btnBearish').className = `flex-1 py-2 rounded-lg transition ${bias === 'BEARISH' ? 'bg-red-600' : 'bg-gray-700 hover:bg-red-600'}`;
+        }
+
+        function setSide(side) {
+            state.side = side;
+            document.getElementById('btnCall').className = `flex-1 py-2 rounded-lg transition ${side === 'CALL' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-blue-600'}`;
+            document.getElementById('btnPut').className = `flex-1 py-2 rounded-lg transition ${side === 'PUT' ? 'bg-purple-600' : 'bg-gray-700 hover:bg-purple-600'}`;
+        }
+
+        // Standard normal CDF approximation
+        function normCDF(x) {
+            const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
+            const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+            const sign = x < 0 ? -1 : 1;
+            x = Math.abs(x) / Math.sqrt(2);
+            const t = 1.0 / (1.0 + p * x);
+            const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+            return 0.5 * (1 + sign * y);
+        }
+
+        function normPDF(x) {
+            return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI);
+        }
+
+        // Black-Scholes
+        function bsPrice(S, K, T, r, sigma, optionType) {
+            const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+            const d2 = d1 - sigma * Math.sqrt(T);
+
+            let price, delta, probItm;
+            if (optionType === 'CALL') {
+                price = S * normCDF(d1) - K * Math.exp(-r * T) * normCDF(d2);
+                delta = normCDF(d1);
+                probItm = normCDF(d2);
+            } else {
+                price = K * Math.exp(-r * T) * normCDF(-d2) - S * normCDF(-d1);
+                delta = -normCDF(-d1);
+                probItm = normCDF(-d2);
+            }
+
+            const gamma = normPDF(d1) / (S * sigma * Math.sqrt(T));
+            return { price, delta, gamma, probItm };
+        }
+
+        // Implied Volatility using bisection
+        function impliedVol(marketPrice, S, K, T, r, optType) {
+            let low = 0.01, high = 3.0;
+            for (let i = 0; i < 100; i++) {
+                const mid = (low + high) / 2;
+                const { price } = bsPrice(S, K, T, r, mid, optType);
+                if (Math.abs(price - marketPrice) < 0.0001) return mid;
+                if (price > marketPrice) high = mid;
+                else low = mid;
+            }
+            return (low + high) / 2;
+        }
+
+        // Build option chain from spot price
+        function buildOptionChainFromSpot(spot, gap, premiums, optionSide) {
+            const atm = Math.round(spot / gap) * gap;
+            let strikes;
+
+            if (optionSide === 'PUT') {
+                strikes = [
+                    atm + 3 * gap, atm + 2 * gap, atm + gap, atm,
+                    atm - gap, atm - 2 * gap, atm - 3 * gap, atm - 4 * gap
+                ];
+            } else {
+                strikes = [
+                    atm - 3 * gap, atm - 2 * gap, atm - gap, atm,
+                    atm + gap, atm + 2 * gap, atm + 3 * gap, atm + 4 * gap
+                ];
+            }
+
+            return strikes.map((s, i) => ({
+                strike: s,
+                premium: premiums[i]
+            }));
+        }
+
+        function getMoneyness(strike, spot, optionSide) {
+            if (optionSide === 'PUT') {
+                if (strike > spot) return 'OTM';
+                if (strike < spot) return 'ITM';
+                return 'ATM';
+            } else {
+                if (strike < spot) return 'ITM';
+                if (strike > spot) return 'OTM';
+                return 'ATM';
+            }
+        }
+
+        function runAnalysis() {
+            const symbol = document.getElementById('symbol').value;
+            const spotPrice = parseFloat(document.getElementById('spotPrice').value);
+            const strikeGap = parseInt(document.getElementById('strikeGap').value);
+            const daysToExpiry = parseInt(document.getElementById('daysToExpiry').value);
+            const lotSize = parseInt(document.getElementById('lotSize').value);
+            const riskFreeRate = parseFloat(document.getElementById('riskFreeRate').value);
+            const totalCapital = parseFloat(document.getElementById('totalCapital').value);
+            const riskPerTrade = parseFloat(document.getElementById('riskPerTrade').value);
+            const fairVol = parseFloat(document.getElementById('fairVol').value);
+
+            // Get hardcoded premiums
+            const premiums = [];
+            for (let i = 0; i < 8; i++) {
+                premiums.push(parseFloat(document.getElementById(`prem${i}`).value));
+            }
+
+            const T = daysToExpiry / 365;
+
+            // Calculate ATM
+            const atm = Math.round(spotPrice / strikeGap) * strikeGap;
+            document.getElementById('atmStrike').value = atm;
+
+            // Build option chain
+            const optionChain = buildOptionChainFromSpot(spotPrice, strikeGap, premiums, state.side);
+
+            // Display Chain Builder Panel
+            document.getElementById('chainBuilderPanel').classList.remove('hidden');
+            
+            const formulaText = state.side === 'PUT' 
+                ? `PUT: [${atm}+60, ${atm}+40, ${atm}+20, ${atm}, ${atm}-20, ${atm}-40, ${atm}-60, ${atm}-80]`
+                : `CALL: [${atm}-60, ${atm}-40, ${atm}-20, ${atm}, ${atm}+20, ${atm}+40, ${atm}+60, ${atm}+80]`;
+            document.getElementById('chainFormula').textContent = formulaText;
+
+            const strikesList = document.getElementById('strikesList');
+            strikesList.innerHTML = '';
+            optionChain.forEach((opt, idx) => {
+                const moneyness = getMoneyness(opt.strike, spotPrice, state.side);
+                const colorClass = moneyness === 'ATM' ? 'bg-yellow-600' : moneyness === 'OTM' ? 'bg-blue-600' : 'bg-purple-600';
+                strikesList.innerHTML += `<span class="px-3 py-1 ${colorClass} rounded-full text-sm">${opt.strike} (₹${opt.premium})</span>`;
+            });
+
+            // Simulated Vol Regime
+            const rvMean = fairVol * 0.9;
+            const rvStd = fairVol * 0.15;
+            const volZ = (fairVol - rvMean) / rvStd;
+
+            let volRegime, volScaler;
+            if (volZ > 0.5) {
+                volRegime = 'FAVORABLE';
+                volScaler = 1.0;
+            } else if (volZ > 0) {
+                volRegime = 'NEUTRAL';
+                volScaler = 0.6;
+            } else {
+                volRegime = 'UNFAVORABLE';
+                volScaler = 0;
+            }
+
+            // Display Vol Regime
+            document.getElementById('volRegimePanel').classList.remove('hidden');
+            document.getElementById('displayFairVol').textContent = (fairVol * 100).toFixed(1) + '%';
+            document.getElementById('displayRvMean').textContent = (rvMean * 100).toFixed(1) + '%';
+            document.getElementById('displayZScore').textContent = volZ.toFixed(2);
+            document.getElementById('displayRegime').textContent = volRegime;
+            
+            const regimeText = document.getElementById('displayRegime');
+            if (volRegime === 'FAVORABLE') {
+                regimeText.className = 'text-2xl font-bold text-green-400';
+                document.getElementById('regimeExplanation').innerHTML = '✅ <strong>Vol Z-Score > 0.5:</strong> Volatility is elevated. Ideal for selling options. Full position sizing (100%).';
+            } else if (volRegime === 'NEUTRAL') {
+                regimeText.className = 'text-2xl font-bold text-yellow-400';
+                document.getElementById('regimeExplanation').innerHTML = '⚠️ <strong>Vol Z-Score 0-0.5:</strong> Volatility slightly above average. Position size reduced to 60%.';
+            } else {
+                regimeText.className = 'text-2xl font-bold text-red-400';
+                document.getElementById('regimeExplanation').innerHTML = '❌ <strong>Vol Z-Score < 0:</strong> Volatility below average. NOT favorable for selling. Script would raise Exception!';
+            }
+
+            // Calculate Option Chain Analytics
+            const chainData = [];
+            optionChain.forEach(opt => {
+                const iv = impliedVol(opt.premium, spotPrice, opt.strike, T, riskFreeRate, state.side);
+                const { price: fairPrice, delta, gamma, probItm } = bsPrice(spotPrice, opt.strike, T, riskFreeRate, fairVol, state.side);
+                const ivEdge = iv - fairVol;
+                const moneyness = getMoneyness(opt.strike, spotPrice, state.side);
+
+                chainData.push({
+                    strike: opt.strike,
+                    premium: opt.premium,
+                    iv: iv,
+                    ivEdge: ivEdge,
+                    delta: delta,
+                    gamma: gamma,
+                    probItm: probItm,
+                    fairPrice: fairPrice,
+                    moneyness: moneyness
+                });
+            });
+
+            // Display Option Chain
+            document.getElementById('chainPanel').classList.remove('hidden');
+            const tbody = document.getElementById('chainTable');
+            tbody.innerHTML = '';
+
+            // Find sell and buy legs
+            const sortedByEdge = [...chainData].sort((a, b) => b.ivEdge - a.ivEdge);
+            const sellLeg = sortedByEdge[0];
+            const buyLeg = chainData.filter(c => c.strike !== sellLeg.strike).sort((a, b) => a.ivEdge - b.ivEdge)[0];
+
+            chainData.forEach(row => {
+                const isSell = row.strike === sellLeg.strike;
+                const isBuy = row.strike === buyLeg.strike;
+                
+                const tr = document.createElement('tr');
+                tr.className = `border-b border-gray-700/50 ${isSell ? 'bg-red-900/20' : isBuy ? 'bg-green-900/20' : ''}`;
+                
+                const edgeColor = row.ivEdge > 0.05 ? 'text-green-400' : row.ivEdge > 0 ? 'text-yellow-400' : 'text-red-400';
+                const moneynessColor = row.moneyness === 'ATM' ? 'text-yellow-400' : row.moneyness === 'OTM' ? 'text-blue-400' : 'text-purple-400';
+                
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-mono">${row.strike}</td>
+                    <td class="py-3 px-4 ${moneynessColor}">${row.moneyness}</td>
+                    <td class="py-3 px-4">₹${row.premium.toFixed(2)}</td>
+                    <td class="py-3 px-4">${(row.iv * 100).toFixed(1)}%</td>
+                    <td class="py-3 px-4 ${edgeColor} font-bold">${row.ivEdge > 0 ? '+' : ''}${(row.ivEdge * 100).toFixed(2)}%</td>
+                    <td class="py-3 px-4">${row.delta.toFixed(3)}</td>
+                    <td class="py-3 px-4">${row.gamma.toFixed(4)}</td>
+                    <td class="py-3 px-4">${(row.probItm * 100).toFixed(1)}%</td>
+                    <td class="py-3 px-4">
+                        ${isSell ? '<span class="px-2 py-1 bg-red-600 rounded text-xs">SELL</span>' : ''}
+                        ${isBuy ? '<span class="px-2 py-1 bg-green-600 rounded text-xs">BUY</span>' : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Calculate Trade Metrics
+            const netPremium = sellLeg.premium - buyLeg.premium;
+            const width = Math.abs(sellLeg.strike - buyLeg.strike);
+            const maxProfitPerLot = netPremium * lotSize;
+            const maxLossPerLot = (width - netPremium) * lotSize;
+
+            const capitalAtRisk = totalCapital * riskPerTrade * volScaler;
+            const contracts = Math.max(1, Math.floor(capitalAtRisk / maxLossPerLot));
+
+            const totalMaxProfit = maxProfitPerLot * contracts;
+            const totalMaxLoss = maxLossPerLot * contracts;
+
+            // Display Trade Setup
+            document.getElementById('tradePanel').classList.remove('hidden');
+            document.getElementById('tradeSymbol').textContent = symbol;
+            document.getElementById('tradeBias').textContent = state.bias;
+            document.getElementById('tradeBias').className = `font-bold ${state.bias === 'BULLISH' ? 'text-green-400' : 'text-red-400'}`;
+            document.getElementById('tradeOptionSide').textContent = state.side;
+            document.getElementById('tradeOptionSide').className = `font-bold ${state.side === 'CALL' ? 'text-blue-400' : 'text-purple-400'}`;
+            
+            document.getElementById('sellStrike').textContent = sellLeg.strike;
+            document.getElementById('buyStrike').textContent = buyLeg.strike;
+            document.getElementById('netPremium').textContent = '₹' + netPremium.toFixed(2);
+            document.getElementById('spreadWidth').textContent = '₹' + width;
+            document.getElementById('contracts').textContent = contracts;
+            document.getElementById('maxProfit').textContent = totalMaxProfit.toLocaleString('en-IN');
+            document.getElementById('maxLoss').textContent = totalMaxLoss.toLocaleString('en-IN');
+            document.getElementById('capitalAtRisk').textContent = '₹' + capitalAtRisk.toLocaleString('en-IN');
+            document.getElementById('volScaler').textContent = volScaler.toFixed(1) + 'x';
+
+            const rrRatio = totalMaxProfit / totalMaxLoss;
+            document.getElementById('rrRatio').textContent = rrRatio.toFixed(2) + ':1';
+            document.getElementById('rrBar').style.width = Math.min(rrRatio * 50, 100) + '%';
+
+            // Terminal Output
+            document.getElementById('terminalPanel').classList.remove('hidden');
+            const terminalOutput = `
+================ OPTION SELLING SYSTEM ================
+Symbol            : ${symbol}
+Spot Price        : ${spotPrice}
+Bias              : ${state.bias}
+Option Side       : ${state.side}
+Vol Regime        : ${volRegime}
+Vol Z-Score       : ${volZ.toFixed(2)}
+-------------------------------------------------------
+Sell Strike       : ${sellLeg.strike}
+Buy Strike        : ${buyLeg.strike}
+Net Premium       : ${netPremium.toFixed(2)}
+Max Profit (₹)    : ${totalMaxProfit.toLocaleString('en-IN')}
+Max Loss (₹)      : ${totalMaxLoss.toLocaleString('en-IN')}
+Contracts         : ${contracts}
+=======================================================`;
+            document.getElementById('terminalOutput').textContent = terminalOutput;
+
+            // Draw Payoff Chart
+            drawPayoffChart(sellLeg.strike, buyLeg.strike, netPremium, lotSize * contracts, spotPrice, state.side);
+        }
+
+        function drawPayoffChart(sellStrike, buyStrike, netPremium, multiplier, spotPrice, optionType) {
+            document.getElementById('chartPanel').classList.remove('hidden');
+
+            const lowerStrike = Math.min(sellStrike, buyStrike);
+            const upperStrike = Math.max(sellStrike, buyStrike);
+            const width = upperStrike - lowerStrike;
+
+            const minPrice = lowerStrike - width * 2;
+            const maxPrice = upperStrike + width * 2;
+            const step = (maxPrice - minPrice) / 100;
+
+            const labels = [];
+            const payoffs = [];
+
+            for (let price = minPrice; price <= maxPrice; price += step) {
+                labels.push(price.toFixed(0));
+                
+                let pnl;
+                if (optionType === 'PUT') {
+                    const sellPayoff = Math.max(sellStrike - price, 0);
+                    const buyPayoff = Math.max(buyStrike - price, 0);
+                    pnl = (netPremium - sellPayoff + buyPayoff) * multiplier;
+                } else {
+                    const sellPayoff = Math.max(price - sellStrike, 0);
+                    const buyPayoff = Math.max(price - buyStrike, 0);
+                    pnl = (netPremium - sellPayoff + buyPayoff) * multiplier;
+                }
+                payoffs.push(pnl);
+            }
+
+            const ctx = document.getElementById('payoffChart').getContext('2d');
+            
+            if (payoffChart) payoffChart.destroy();
+
+            payoffChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'P&L at Expiry',
+                        data: payoffs,
+                        borderColor: '#22c55e',
+                        backgroundColor: (context) => {
+                            const chart = context.chart;
+                            const {ctx, chartArea} = chart;
+                            if (!chartArea) return null;
+                            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                            gradient.addColorStop(0, 'rgba(239, 68, 68, 0.3)');
+                            gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
+                            gradient.addColorStop(1, 'rgba(34, 197, 94, 0.3)');
+                            return gradient;
+                        },
+                        fill: true,
+                        tension: 0.1,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => 'P&L: ₹' + ctx.parsed.y.toLocaleString('en-IN')
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Stock Price at Expiry', color: '#9ca3af' },
+                            ticks: { color: '#9ca3af', maxTicksLimit: 10 },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Profit/Loss (₹)', color: '#9ca3af' },
+                            ticks: { color: '#9ca3af', callback: (v) => '₹' + v.toLocaleString('en-IN') },
+                            grid: { color: 'rgba(255,255,255,0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize
+        setBias('BEARISH');
+        setSide('PUT');
+    </script>
+</body>
+</html>
