@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OPTIX PRO - Icon Generator</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #1a1a2e;
+            color: #fff;
+            padding: 40px;
+            text-align: center;
+        }
+        h1 { color: #4a9eff; }
+        .icon-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .icon-item {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 12px;
+        }
+        .icon-item p {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #888;
+        }
+        canvas { border-radius: 20%; }
+        button {
+            margin-top: 30px;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #4a9eff, #a855f7);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button:hover { transform: scale(1.05); }
+        .instructions {
+            max-width: 600px;
+            margin: 40px auto;
+            text-align: left;
+            background: #16213e;
+            padding: 30px;
+            border-radius: 12px;
+        }
+        .instructions h3 { color: #4a9eff; }
+        .instructions ol { line-height: 2; }
+        code {
+            background: #0f0f1a;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎨 OPTIX PRO Icon Generator</h1>
+    <p>Generate all required icons for the Android APK</p>
+    
+    <div class="icon-grid" id="iconGrid"></div>
+    
+    <button onclick="downloadAll()">📥 Download All Icons</button>
+    
+    <div class="instructions">
+        <h3>📱 How to Create Your Private APK</h3>
+        <ol>
+            <li><strong>Download Icons:</strong> Click the button above to download all icons</li>
+            <li><strong>Create icons folder:</strong> Create a folder named <code>icons</code> in your project</li>
+            <li><strong>Move icons:</strong> Place all downloaded icons in the <code>icons</code> folder</li>
+            <li><strong>Host the PWA:</strong> Deploy to GitHub Pages, Netlify, or Vercel</li>
+            <li><strong>Generate APK:</strong> Use one of these methods:
+                <ul>
+                    <li><a href="https://www.pwabuilder.com/" target="_blank" style="color: #4a9eff;">PWABuilder.com</a> (Easiest - just paste your URL)</li>
+                    <li><a href="https://AAAbuilder.com" target="_blank" style="color: #4a9eff;">Bubblewrap CLI</a> (Advanced)</li>
+                </ul>
+            </li>
+            <li><strong>Sign the APK:</strong> Use Android Studio or jarsigner for private distribution</li>
+        </ol>
+    </div>
+
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        
+        function generateIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#4a9eff');
+            gradient.addColorStop(1, '#a855f7');
+            
+            // Rounded rectangle background
+            const radius = size * 0.2;
+            ctx.beginPath();
+            ctx.moveTo(radius, 0);
+            ctx.lineTo(size - radius, 0);
+            ctx.quadraticCurveTo(size, 0, size, radius);
+            ctx.lineTo(size, size - radius);
+            ctx.quadraticCurveTo(size, size, size - radius, size);
+            ctx.lineTo(radius, size);
+            ctx.quadraticCurveTo(0, size, 0, size - radius);
+            ctx.lineTo(0, radius);
+            ctx.quadraticCurveTo(0, 0, radius, 0);
+            ctx.closePath();
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // Inner dark circle
+            ctx.beginPath();
+            ctx.arc(size/2, size/2, size * 0.35, 0, Math.PI * 2);
+            ctx.fillStyle = '#0a0a0f';
+            ctx.fill();
+            
+            // Letter O
+            ctx.font = `bold ${size * 0.4}px Arial`;
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('O', size/2, size/2 + size*0.02);
+            
+            // Accent dot
+            ctx.beginPath();
+            ctx.arc(size * 0.7, size * 0.3, size * 0.06, 0, Math.PI * 2);
+            ctx.fillStyle = '#00d4aa';
+            ctx.fill();
+            
+            return canvas;
+        }
+        
+        function displayIcons() {
+            const grid = document.getElementById('iconGrid');
+            sizes.forEach(size => {
+                const canvas = generateIcon(size);
+                const item = document.createElement('div');
+                item.className = 'icon-item';
+                item.appendChild(canvas);
+                item.innerHTML += `<p>${size}x${size}</p>`;
+                grid.appendChild(item);
+            });
+        }
+        
+        function downloadAll() {
+            sizes.forEach((size, index) => {
+                setTimeout(() => {
+                    const canvas = generateIcon(size);
+                    const link = document.createElement('a');
+                    link.download = `icon-${size}x${size}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                }, index * 200);
+            });
+        }
+        
+        displayIcons();
+    </script>
+</body>
+</html>

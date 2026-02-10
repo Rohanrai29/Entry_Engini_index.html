@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4a9eff">
+    <title>OPTIX PRO | Institutional Options Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a24;
+            --bg-card: #16161e;
+            --border-color: #2a2a3a;
+            --border-active: #3a3a4a;
+            --text-primary: #e8e8ed;
+            --text-secondary: #8a8a9a;
+            --text-muted: #5a5a6a;
+            --accent-green: #00d4aa;
+            --accent-green-dim: rgba(0, 212, 170, 0.15);
+            --accent-red: #ff4757;
+            --accent-red-dim: rgba(255, 71, 87, 0.15);
+            --accent-blue: #4a9eff;
+            --accent-blue-dim: rgba(74, 158, 255, 0.15);
+            --accent-yellow: #ffa726;
+            --accent-yellow-dim: rgba(255, 167, 38, 0.15);
+            --accent-purple: #a855f7;
+            --accent-orange: #f97316;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Header */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 24px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 15px;
+            letter-spacing: 1px;
+        }
+
+        .logo-text span {
+            color: var(--accent-blue);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .market-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .market-status.connected {
+            background: var(--accent-green-dim);
+            border: 1px solid var(--accent-green);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 212, 170, 0.4); }
+            50% { opacity: 0.8; box-shadow: 0 0 0 4px rgba(0, 212, 170, 0); }
+        }
+
+        .clock {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Main Layout */
+        .main-container {
+            display: grid;
+            grid-template-columns: 320px 1fr 360px;
+            gap: 1px;
+            background: var(--border-color);
+            min-height: calc(100vh - 48px);
+        }
+
+        .panel {
+            background: var(--bg-primary);
+            overflow-y: auto;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            background: var(--bg-primary);
+            z-index: 10;
+        }
+
+        .panel-title {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .panel-content {
+            padding: 16px 20px;
+        }
+
+        /* Input Groups */
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .input-field {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 10px 12px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            background: var(--bg-secondary);
+        }
+
+        .input-field.readonly {
+            background: var(--bg-secondary);
+            color: var(--accent-blue);
+            border-color: transparent;
+        }
+
+        /* Toggle Buttons */
+        .toggle-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 10px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .toggle-btn:hover {
+            background: var(--bg-card);
+            border-color: var(--border-active);
+        }
+
+        .toggle-btn.active-bull {
+            background: var(--accent-green-dim);
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .toggle-btn.active-bear {
+            background: var(--accent-red-dim);
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .toggle-btn.active-call {
+            background: var(--accent-blue-dim);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .toggle-btn.active-put {
+            background: rgba(168, 85, 247, 0.15);
+            border-color: var(--accent-purple);
+            color: var(--accent-purple);
+        }
+
+        /* Premium Grid */
+        .premium-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .premium-item {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 8px 10px;
+        }
+
+        .premium-item label {
+            display: block;
+            font-size: 9px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .premium-item input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+        }
+
+        .premium-item input:focus {
+            outline: none;
+        }
+
+        /* Run Button */
+        .run-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--accent-blue), #3a7bd5);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 20px;
+        }
+
+        .run-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(74, 158, 255, 0.3);
+        }
+
+        .run-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Center Panel */
+        .center-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Metrics Bar */
+        .metrics-bar {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1px;
+            background: var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .metric-item {
+            background: var(--bg-primary);
+            padding: 16px 20px;
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .metric-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .metric-value.green { color: var(--accent-green); }
+        .metric-value.red { color: var(--accent-red); }
+        .metric-value.blue { color: var(--accent-blue); }
+        .metric-value.yellow { color: var(--accent-yellow); }
+
+        /* Volatility Regime */
+        .vol-regime-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .vol-item {
+            background: var(--bg-secondary);
+            padding: 12px 16px;
+            text-align: center;
+        }
+
+        .vol-label {
+            font-size: 9px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .vol-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .regime-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .regime-favorable {
+            background: var(--accent-green-dim);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+        }
+
+        .regime-neutral {
+            background: var(--accent-yellow-dim);
+            color: var(--accent-yellow);
+            border: 1px solid var(--accent-yellow);
+        }
+
+        .regime-unfavorable {
+            background: var(--accent-red-dim);
+            color: var(--accent-red);
+            border: 1px solid var(--accent-red);
+        }
+
+        /* Option Chain Table */
+        .chain-container {
+            flex: 1;
+            overflow: auto;
+        }
+
+        .chain-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .chain-table th {
+            position: sticky;
+            top: 0;
+            background: var(--bg-secondary);
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .chain-table th.right {
+            text-align: right;
+        }
+
+        .chain-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .chain-table td.right {
+            text-align: right;
+        }
+
+        .chain-table tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .chain-table tr.sell-row {
+            background: var(--accent-red-dim);
+        }
+
+        .chain-table tr.buy-row {
+            background: var(--accent-green-dim);
+        }
+
+        .moneyness-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-otm {
+            background: var(--accent-blue-dim);
+            color: var(--accent-blue);
+        }
+
+        .badge-atm {
+            background: var(--accent-yellow-dim);
+            color: var(--accent-yellow);
+        }
+
+        .badge-itm {
+            background: rgba(168, 85, 247, 0.15);
+            color: var(--accent-purple);
+        }
+
+        .action-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .tag-sell {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .tag-buy {
+            background: var(--accent-green);
+            color: white;
+        }
+
+        /* Chart Container */
+        .chart-container {
+            padding: 20px;
+            border-top: 1px solid var(--border-color);
+            height: 300px;
+        }
+
+        /* Right Panel - Trade Summary */
+        .trade-section {
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 20px;
+        }
+
+        .section-title {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 3px;
+            height: 12px;
+            background: var(--accent-blue);
+            border-radius: 2px;
+        }
+
+        .trade-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .trade-row:last-child {
+            border-bottom: none;
+        }
+
+        .trade-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .trade-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        /* PnL Cards */
+        .pnl-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .pnl-card {
+            padding: 16px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .pnl-card.profit {
+            background: var(--accent-green-dim);
+            border: 1px solid rgba(0, 212, 170, 0.3);
+        }
+
+        .pnl-card.loss {
+            background: var(--accent-red-dim);
+            border: 1px solid rgba(255, 71, 87, 0.3);
+        }
+
+        .pnl-label {
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .pnl-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .pnl-card.profit .pnl-value { color: var(--accent-green); }
+        .pnl-card.loss .pnl-value { color: var(--accent-red); }
+
+        /* Risk Meter */
+        .risk-meter {
+            margin-top: 12px;
+        }
+
+        .risk-bar-bg {
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .risk-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-blue));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* Terminal */
+        .terminal {
+            background: #000;
+            border-radius: 4px;
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            line-height: 1.6;
+            color: var(--accent-green);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .terminal-line {
+            white-space: pre;
+        }
+
+        .terminal-line.dim {
+            color: var(--text-muted);
+        }
+
+        /* Strike Chain Visual */
+        .strike-chain {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .strike-chip {
+            padding: 4px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 3px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+        }
+
+        .strike-chip.atm {
+            border-color: var(--accent-yellow);
+            background: var(--accent-yellow-dim);
+        }
+
+        .strike-chip.itm {
+            border-color: var(--accent-purple);
+            background: rgba(168, 85, 247, 0.15);
+        }
+
+        .strike-chip.otm {
+            border-color: var(--accent-blue);
+            background: var(--accent-blue-dim);
+        }
+
+        /* Derived Side Box */
+        .derived-side {
+            margin-top: 4px;
+        }
+
+        .derived-box {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .derived-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .derived-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .derived-value.credit {
+            color: var(--accent-green);
+        }
+
+        .derived-value.debit {
+            color: var(--accent-orange);
+        }
+
+        .credit-tag {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .debit-tag {
+            color: var(--accent-orange);
+            font-weight: 600;
+        }
+
+        .derived-hint {
+            font-size: 9px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            font-style: italic;
+        }
+
+        /* Strategy Badge */
+        .strategy-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .strategy-badge.bullish-put {
+            background: var(--accent-green-dim);
+            border: 1px solid var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .strategy-badge.bearish-call {
+            background: var(--accent-red-dim);
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        /* Fetch Button */
+        .fetch-btn {
+            padding: 10px 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fetch-btn:hover {
+            background: var(--accent-blue-dim);
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+        }
+
+        .fetch-btn.loading {
+            pointer-events: none;
+            background: var(--accent-yellow-dim);
+            border-color: var(--accent-yellow);
+            color: var(--accent-yellow);
+        }
+
+        .fetch-btn.loading #fetchIcon {
+            animation: spin 1s linear infinite;
+        }
+
+        .fetch-btn.success {
+            background: var(--accent-green-dim);
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+
+        .fetch-btn.error {
+            background: var(--accent-red-dim);
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .vol-fetch-status {
+            margin-top: 6px;
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .vol-fetch-status.success {
+            color: var(--accent-green);
+        }
+
+        .vol-fetch-status.error {
+            color: var(--accent-red);
+        }
+
+        .vol-fetch-status.loading {
+            color: var(--accent-yellow);
+        }
+
+        /* Data Source Badge */
+        .data-source {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-left: 8px;
+        }
+
+        .data-source.live {
+            background: var(--accent-green-dim);
+            color: var(--accent-green);
+            border: 1px solid var(--accent-green);
+        }
+
+        .data-source.manual {
+            background: var(--accent-yellow-dim);
+            color: var(--accent-yellow);
+            border: 1px solid var(--accent-yellow);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-active);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .main-container {
+                grid-template-columns: 280px 1fr 320px;
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-bar {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .vol-regime-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 0 12px;
+            }
+
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+
+            .panel {
+                border-bottom: 4px solid var(--border-color);
+            }
+
+            .metrics-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .vol-regime-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .chain-table th:nth-child(6),
+            .chain-table td:nth-child(6),
+            .chain-table th:nth-child(7),
+            .chain-table td:nth-child(7) {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">O</div>
+            <div class="logo-text">OPTIX<span>PRO</span></div>
+        </div>
+        <div class="header-right">
+            <div class="market-status" id="marketStatus">
+                <div class="status-dot"></div>
+                <span>SYSTEM ACTIVE</span>
+            </div>
+            <div class="clock mono" id="clock">--:--:--</div>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="main-container">
+        <!-- Left Panel - Parameters -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">Parameters</span>
+            </div>
+            <div class="panel-content">
+                <div class="input-group">
+                    <label class="input-label">Symbol</label>
+                    <input type="text" id="symbol" value="INFY.NS" class="input-field mono">
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="input-group">
+                        <label class="input-label">Spot Price</label>
+                        <input type="number" id="spotPrice" value="1680" class="input-field mono">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Strike Gap</label>
+                        <input type="number" id="strikeGap" value="20" class="input-field mono">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="input-group">
+                        <label class="input-label">Days to Expiry</label>
+                        <input type="number" id="daysToExpiry" value="35" class="input-field mono">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Lot Size</label>
+                        <input type="number" id="lotSize" value="400" class="input-field mono">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="input-group">
+                        <label class="input-label">Risk-Free Rate</label>
+                        <input type="number" id="riskFreeRate" value="0.06" step="0.01" class="input-field mono">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Fair Vol <span id="volSourceBadge" class="data-source manual">MANUAL</span></label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="number" id="fairVol" value="0.28" step="0.01" class="input-field mono" style="flex: 1;">
+                            <button onclick="fetchVolatilityData()" id="fetchVolBtn" class="fetch-btn" title="Fetch from Yahoo Finance">
+                                <span id="fetchIcon">↻</span>
+                            </button>
+                        </div>
+                        <div id="volFetchStatus" class="vol-fetch-status"></div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="input-group">
+                        <label class="input-label">Total Capital ₹</label>
+                        <input type="number" id="totalCapital" value="5000000" class="input-field mono">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Risk Per Trade</label>
+                        <input type="number" id="riskPerTrade" value="0.01" step="0.01" class="input-field mono">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">ATM Strike (Auto)</label>
+                    <input type="text" id="atmStrike" value="—" class="input-field mono readonly" readonly>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Price Bias</label>
+                    <div class="toggle-group">
+                        <button onclick="setBias('BULLISH')" id="btnBullish" class="toggle-btn">▲ Bullish</button>
+                        <button onclick="setBias('BEARISH')" id="btnBearish" class="toggle-btn active-bear">▼ Bearish</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Option Side</label>
+                    <div class="toggle-group">
+                        <button onclick="setOptionSide('PUT')" id="btnPut" class="toggle-btn active-put">PUT</button>
+                        <button onclick="setOptionSide('CALL')" id="btnCall" class="toggle-btn">CALL</button>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Strategy Structure (Auto-Derived)</label>
+                    <div class="derived-side">
+                        <div class="derived-box" id="derivedStructure">
+                            <span class="derived-label">BEARISH + PUT →</span>
+                            <span class="derived-value debit">BEAR PUT DEBIT</span>
+                        </div>
+                        <div class="derived-hint" id="structureHint">Debit spread: pay premium upfront</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label class="input-label">Hardcoded Premiums (ITM → ATM → OTM)</label>
+                    <div class="premium-grid">
+                        <div class="premium-item" style="border-left: 2px solid var(--accent-purple);"><label>ITM 1</label><input type="number" id="prem0" value="96.00" step="0.5" class="mono"></div>
+                        <div class="premium-item" style="border-left: 2px solid var(--accent-purple);"><label>ITM 2</label><input type="number" id="prem1" value="79.00" step="0.5" class="mono"></div>
+                        <div class="premium-item" style="border-left: 2px solid var(--accent-purple);"><label>ITM 3</label><input type="number" id="prem2" value="64.30" step="0.5" class="mono"></div>
+                        <div class="premium-item" style="border-left: 2px solid var(--accent-yellow);"><label>ATM</label><input type="number" id="prem3" value="52.55" step="0.5" class="mono"></div>
+                        <div class="premium-item" style="border-left: 2px solid var(--accent-blue);"><label>OTM 1</label><input type="number" id="prem4" value="40.00" step="0.5" class="mono"></div>
+                        <div class="premium-item" style="border-left: 2px solid var(--accent-blue);"><label>OTM 2</label><input type="number" id="prem5" value="30.60" step="0.5" class="mono"></div>
+                        <div class="premium-item" style="border-left: 2px solid var(--accent-blue);"><label>OTM 3</label><input type="number" id="prem6" value="23.60" step="0.5" class="mono"></div>
+                        <div class="premium-item" style="border-left: 2px solid var(--accent-blue);"><label>OTM 4</label><input type="number" id="prem7" value="18.50" step="0.5" class="mono"></div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px;">
+                    <button onclick="fetchAndAnalyze()" class="run-btn" style="background: linear-gradient(135deg, var(--accent-green), #00a896); margin-top: 0;">
+                        ↻ Fetch & Run
+                    </button>
+                    <button onclick="runAnalysis()" class="run-btn" style="margin-top: 0;">
+                        ▶ Execute
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center Panel - Analytics -->
+        <div class="panel center-panel">
+            <!-- Metrics Bar -->
+            <div class="metrics-bar">
+                <div class="metric-item">
+                    <div class="metric-label">Spot Price</div>
+                    <div class="metric-value blue" id="mSpot">—</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-label">ATM Strike</div>
+                    <div class="metric-value" id="mATM">—</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-label">Days to Expiry</div>
+                    <div class="metric-value" id="mDTE">—</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-label">Contracts</div>
+                    <div class="metric-value yellow" id="mContracts">—</div>
+                </div>
+                <div class="metric-item">
+                    <div class="metric-label">R:R Ratio</div>
+                    <div class="metric-value green" id="mRR">—</div>
+                </div>
+            </div>
+
+            <!-- Vol Regime Bar -->
+            <div class="vol-regime-bar">
+                <div class="vol-item">
+                    <div class="vol-label">Fair Vol</div>
+                    <div class="vol-value" id="vFairVol">—</div>
+                </div>
+                <div class="vol-item">
+                    <div class="vol-label">RV Mean (60d)</div>
+                    <div class="vol-value" id="vRvMean">—</div>
+                </div>
+                <div class="vol-item">
+                    <div class="vol-label">Z-Score</div>
+                    <div class="vol-value" id="vZScore">—</div>
+                </div>
+                <div class="vol-item">
+                    <div class="vol-label">Regime</div>
+                    <div id="vRegime"><span class="regime-badge">—</span></div>
+                </div>
+            </div>
+
+            <!-- Option Chain Table -->
+            <div class="chain-container">
+                <table class="chain-table">
+                    <thead>
+                        <tr>
+                            <th>Strike</th>
+                            <th>Type</th>
+                            <th class="right">Premium</th>
+                            <th class="right">IV</th>
+                            <th class="right">IV Edge</th>
+                            <th class="right">Delta</th>
+                            <th class="right">Gamma</th>
+                            <th class="right">Prob ITM</th>
+                            <th>Signal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="chainTable">
+                        <tr>
+                            <td colspan="9" style="text-align: center; padding: 60px; color: var(--text-muted);">
+                                Configure parameters and execute analysis
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Payoff Chart -->
+            <div class="chart-container">
+                <canvas id="payoffChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Right Panel - Trade Summary -->
+        <div class="panel">
+            <div class="panel-header">
+                <span class="panel-title">Trade Summary</span>
+            </div>
+
+            <div class="trade-section">
+                <div class="section-title">Position Details</div>
+                <div class="trade-row">
+                    <span class="trade-label">Symbol</span>
+                    <span class="trade-value" id="tSymbol" style="color: var(--accent-blue);">—</span>
+                </div>
+                <div class="trade-row">
+                    <span class="trade-label">Bias</span>
+                    <span class="trade-value" id="tBias">—</span>
+                </div>
+                <div class="trade-row">
+                    <span class="trade-label">Strategy</span>
+                    <span class="trade-value" id="tSide">—</span>
+                </div>
+                <div class="trade-row">
+                    <span class="trade-label">Strategy Type</span>
+                    <span id="tStrategyBadge">—</span>
+                </div>
+            </div>
+
+            <div class="trade-section">
+                <div class="section-title">Spread Structure</div>
+                <div class="trade-row">
+                    <span class="trade-label">Sell Strike</span>
+                    <span class="trade-value" id="tSellStrike" style="color: var(--accent-red);">—</span>
+                </div>
+                <div class="trade-row">
+                    <span class="trade-label">Buy Strike</span>
+                    <span class="trade-value" id="tBuyStrike" style="color: var(--accent-green);">—</span>
+                </div>
+                <div class="trade-row">
+                    <span class="trade-label">Net Premium</span>
+                    <span class="trade-value" id="tNetPremium">—</span>
+                </div>
+                <div class="trade-row">
+                    <span class="trade-label">Spread Width</span>
+                    <span class="trade-value" id="tWidth">—</span>
+                </div>
+                <div class="trade-row">
+                    <span class="trade-label">Contracts</span>
+                    <span class="trade-value" id="tContracts" style="color: var(--accent-yellow);">—</span>
+                </div>
+            </div>
+
+            <div class="trade-section">
+                <div class="section-title">Profit & Loss</div>
+                <div class="pnl-grid">
+                    <div class="pnl-card profit">
+                        <div class="pnl-label">Max Profit</div>
+                        <div class="pnl-value" id="tMaxProfit">—</div>
+                    </div>
+                    <div class="pnl-card loss">
+                        <div class="pnl-label">Max Loss</div>
+                        <div class="pnl-value" id="tMaxLoss">—</div>
+                    </div>
+                </div>
+                <div class="risk-meter">
+                    <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted);">
+                        <span>RISK/REWARD</span>
+                        <span id="tRRText">—</span>
+                    </div>
+                    <div class="risk-bar-bg">
+                        <div class="risk-bar-fill" id="rrBar" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="trade-section">
+                <div class="section-title">Capital Allocation</div>
+                <div class="trade-row">
+                    <span class="trade-label">Capital at Risk</span>
+                    <span class="trade-value" id="tCapRisk" style="color: var(--accent-blue);">—</span>
+                </div>
+                <div class="trade-row">
+                    <span class="trade-label">Vol Scaler</span>
+                    <span class="trade-value" id="tVolScaler">—</span>
+                </div>
+            </div>
+
+            <div class="trade-section">
+                <div class="section-title">Generated Chain (3 ITM + 1 ATM + 4 OTM)</div>
+                <div style="display: flex; gap: 12px; margin-bottom: 8px; font-size: 9px;">
+                    <span style="color: var(--accent-purple);">● ITM</span>
+                    <span style="color: var(--accent-yellow);">● ATM</span>
+                    <span style="color: var(--accent-blue);">● OTM</span>
+                </div>
+                <div class="strike-chain" id="strikeChain">
+                    <span style="color: var(--text-muted); font-size: 11px;">Execute analysis to generate</span>
+                </div>
+            </div>
+
+            <div class="trade-section">
+                <div class="section-title">Terminal Output</div>
+                <div class="terminal" id="terminal">
+<span class="terminal-line dim">// Awaiting execution...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let state = { bias: 'BEARISH', optionSide: 'PUT' };
+        let payoffChart = null;
+        let volData = null;
+
+        // Clock
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').textContent = now.toLocaleTimeString('en-US', { hour12: false });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Fetch Volatility Data from Yahoo Finance
+        async function fetchVolatilityData() {
+            const symbol = document.getElementById('symbol').value;
+            const btn = document.getElementById('fetchVolBtn');
+            const status = document.getElementById('volFetchStatus');
+            const badge = document.getElementById('volSourceBadge');
+            
+            btn.className = 'fetch-btn loading';
+            status.className = 'vol-fetch-status loading';
+            status.textContent = `Fetching ${symbol} data...`;
+            
+            try {
+                const endDate = Math.floor(Date.now() / 1000);
+                const startDate = endDate - (365 * 24 * 60 * 60);
+                const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?period1=${startDate}&period2=${endDate}&interval=1d`;
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`;
+                
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
+                    throw new Error('Invalid response');
+                }
+                
+                const closes = data.chart.result[0].indicators.quote[0].close;
+                const validPrices = closes.filter(p => p !== null && !isNaN(p));
+                
+                if (validPrices.length < 60) throw new Error('Insufficient data');
+                
+                const returns = [];
+                for (let i = 1; i < validPrices.length; i++) {
+                    returns.push((validPrices[i] - validPrices[i - 1]) / validPrices[i - 1]);
+                }
+                
+                const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+                const variance = returns.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / returns.length;
+                const fairVol = Math.sqrt(variance) * Math.sqrt(252);
+                
+                const rv60Values = [];
+                for (let i = 59; i < returns.length; i++) {
+                    const window = returns.slice(i - 59, i + 1);
+                    const windowMean = window.reduce((a, b) => a + b, 0) / window.length;
+                    const windowVar = window.reduce((a, b) => a + Math.pow(b - windowMean, 2), 0) / window.length;
+                    rv60Values.push(Math.sqrt(windowVar) * Math.sqrt(252));
+                }
+                
+                const rvMean = rv60Values.reduce((a, b) => a + b, 0) / rv60Values.length;
+                const rvVariance = rv60Values.reduce((a, b) => a + Math.pow(b - rvMean, 2), 0) / rv60Values.length;
+                const rvStd = Math.sqrt(rvVariance);
+                const volZ = (fairVol - rvMean) / rvStd;
+                const currentSpot = validPrices[validPrices.length - 1];
+                
+                volData = { symbol, fairVol, rvMean, rvStd, volZ, currentSpot };
+                
+                document.getElementById('fairVol').value = fairVol.toFixed(4);
+                document.getElementById('spotPrice').value = currentSpot.toFixed(2);
+                
+                btn.className = 'fetch-btn success';
+                status.className = 'vol-fetch-status success';
+                status.innerHTML = `✓ Vol: ${(fairVol * 100).toFixed(2)}% | Z: ${volZ.toFixed(2)} | Spot: ₹${currentSpot.toFixed(2)}`;
+                badge.className = 'data-source live';
+                badge.textContent = 'LIVE';
+                
+                document.getElementById('marketStatus').className = 'market-status connected';
+                document.getElementById('marketStatus').innerHTML = `<div class="status-dot"></div><span>CONNECTED</span>`;
+                
+                setTimeout(() => { btn.className = 'fetch-btn'; }, 2000);
+                return true;
+            } catch (error) {
+                btn.className = 'fetch-btn error';
+                status.className = 'vol-fetch-status error';
+                status.textContent = `✗ ${error.message}`;
+                badge.className = 'data-source manual';
+                badge.textContent = 'MANUAL';
+                setTimeout(() => { btn.className = 'fetch-btn'; }, 3000);
+                return false;
+            }
+        }
+
+        async function fetchAndAnalyze() {
+            await fetchVolatilityData();
+            setTimeout(() => runAnalysis(), 500);
+        }
+
+        // Strategy Structure
+        function getStructure(bias, optionSide) {
+            if (bias === 'BULLISH' && optionSide === 'PUT') return { name: 'BULL_PUT_CREDIT', isCredit: true };
+            if (bias === 'BEARISH' && optionSide === 'CALL') return { name: 'BEAR_CALL_CREDIT', isCredit: true };
+            if (bias === 'BEARISH' && optionSide === 'PUT') return { name: 'BEAR_PUT_DEBIT', isCredit: false };
+            if (bias === 'BULLISH' && optionSide === 'CALL') return { name: 'BULL_CALL_DEBIT', isCredit: false };
+            throw new Error('Invalid combination');
+        }
+
+        function updateStructureDisplay() {
+            const { name, isCredit } = getStructure(state.bias, state.optionSide);
+            const displayName = name.replace(/_/g, ' ');
+            document.getElementById('derivedStructure').innerHTML = `
+                <span class="derived-label">${state.bias} + ${state.optionSide} →</span>
+                <span class="derived-value ${isCredit ? 'credit' : 'debit'}">${displayName}</span>
+            `;
+            document.getElementById('structureHint').textContent = isCredit ? 'Credit spread: receive premium upfront' : 'Debit spread: pay premium upfront';
+            document.getElementById('structureHint').style.color = isCredit ? 'var(--accent-green)' : 'var(--accent-orange)';
+        }
+
+        function setBias(bias) {
+            state.bias = bias;
+            document.getElementById('btnBullish').className = `toggle-btn ${bias === 'BULLISH' ? 'active-bull' : ''}`;
+            document.getElementById('btnBearish').className = `toggle-btn ${bias === 'BEARISH' ? 'active-bear' : ''}`;
+            updateStructureDisplay();
+        }
+
+        function setOptionSide(side) {
+            state.optionSide = side;
+            document.getElementById('btnPut').className = `toggle-btn ${side === 'PUT' ? 'active-put' : ''}`;
+            document.getElementById('btnCall').className = `toggle-btn ${side === 'CALL' ? 'active-call' : ''}`;
+            updateStructureDisplay();
+        }
+
+        // Math Functions
+        function normCDF(x) {
+            const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+            const sign = x < 0 ? -1 : 1;
+            x = Math.abs(x) / Math.sqrt(2);
+            const t = 1.0 / (1.0 + p * x);
+            const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+            return 0.5 * (1 + sign * y);
+        }
+
+        function normPDF(x) { return Math.exp(-0.5 * x * x) / Math.sqrt(2 * Math.PI); }
+
+        function bsPrice(S, K, T, r, sigma, optionType) {
+            const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+            const d2 = d1 - sigma * Math.sqrt(T);
+            let price, delta, probItm;
+            if (optionType === 'CALL') {
+                price = S * normCDF(d1) - K * Math.exp(-r * T) * normCDF(d2);
+                delta = normCDF(d1);
+                probItm = normCDF(d2);
+            } else {
+                price = K * Math.exp(-r * T) * normCDF(-d2) - S * normCDF(-d1);
+                delta = -normCDF(-d1);
+                probItm = normCDF(-d2);
+            }
+            return { price, delta, gamma: normPDF(d1) / (S * sigma * Math.sqrt(T)), probItm };
+        }
+
+        function impliedVol(marketPrice, S, K, T, r, optType) {
+            let low = 0.01, high = 3.0;
+            for (let i = 0; i < 100; i++) {
+                const mid = (low + high) / 2;
+                const { price } = bsPrice(S, K, T, r, mid, optType);
+                if (Math.abs(price - marketPrice) < 0.0001) return mid;
+                if (price > marketPrice) high = mid; else low = mid;
+            }
+            return (low + high) / 2;
+        }
+
+        function buildOptionChainFromSpot(spot, gap, premiums, optionSide) {
+            const atm = Math.round(spot / gap) * gap;
+            let strikes;
+            if (optionSide === 'PUT') {
+                strikes = [atm + 3*gap, atm + 2*gap, atm + gap, atm, atm - gap, atm - 2*gap, atm - 3*gap, atm - 4*gap];
+            } else {
+                strikes = [atm - 3*gap, atm - 2*gap, atm - gap, atm, atm + gap, atm + 2*gap, atm + 3*gap, atm + 4*gap];
+            }
+            return strikes.map((s, i) => ({ strike: s, premium: premiums[i] }));
+        }
+
+        function getMoneyness(strike, spot, optionSide, strikeGap) {
+            const atm = Math.round(spot / strikeGap) * strikeGap;
+            if (strike === atm) return 'ATM';
+            if (optionSide === 'PUT') return strike > atm ? 'ITM' : 'OTM';
+            return strike < atm ? 'ITM' : 'OTM';
+        }
+
+        function pickSpread(chainData, priceBias, optionSide) {
+            const { name: structure, isCredit } = getStructure(priceBias, optionSide);
+            let sellLeg = null, buyLeg = null, hedgeDir;
+            
+            if (priceBias === 'BULLISH' && optionSide === 'PUT') hedgeDir = 'lower';
+            else if (priceBias === 'BEARISH' && optionSide === 'CALL') hedgeDir = 'higher';
+            else if (priceBias === 'BEARISH' && optionSide === 'PUT') hedgeDir = 'lower';
+            else if (priceBias === 'BULLISH' && optionSide === 'CALL') hedgeDir = 'higher';
+            
+            const sortedDesc = [...chainData].sort((a, b) => b.ivEdge - a.ivEdge);
+            const sortedAsc = [...chainData].sort((a, b) => a.ivEdge - b.ivEdge);
+            
+            if (isCredit) {
+                for (const short of sortedDesc) {
+                    const hedges = hedgeDir === 'lower' ? chainData.filter(c => c.strike < short.strike) : chainData.filter(c => c.strike > short.strike);
+                    if (hedges.length === 0) continue;
+                    const long = hedges.sort((a, b) => a.ivEdge - b.ivEdge)[0];
+                    sellLeg = short; buyLeg = long; break;
+                }
+            } else {
+                for (const long of sortedAsc) {
+                    const hedges = hedgeDir === 'lower' ? chainData.filter(c => c.strike < long.strike) : chainData.filter(c => c.strike > long.strike);
+                    if (hedges.length === 0) continue;
+                    for (const shortCandidate of hedges.sort((a, b) => b.ivEdge - a.ivEdge)) {
+                        if (long.premium > shortCandidate.premium) { sellLeg = shortCandidate; buyLeg = long; break; }
+                    }
+                    if (sellLeg && buyLeg) break;
+                }
+            }
+            if (!sellLeg || !buyLeg) throw new Error('No valid spread found');
+            return { structure, isCredit, sellLeg, buyLeg };
+        }
+
+        function runAnalysis() {
+            const symbol = document.getElementById('symbol').value;
+            const spotPrice = parseFloat(document.getElementById('spotPrice').value);
+            const strikeGap = parseInt(document.getElementById('strikeGap').value);
+            const daysToExpiry = parseInt(document.getElementById('daysToExpiry').value);
+            const lotSize = parseInt(document.getElementById('lotSize').value);
+            const riskFreeRate = parseFloat(document.getElementById('riskFreeRate').value);
+            const totalCapital = parseFloat(document.getElementById('totalCapital').value);
+            const riskPerTrade = parseFloat(document.getElementById('riskPerTrade').value);
+            const fairVol = parseFloat(document.getElementById('fairVol').value);
+
+            const premiums = [];
+            for (let i = 0; i < 8; i++) premiums.push(parseFloat(document.getElementById(`prem${i}`).value));
+
+            const T = daysToExpiry / 365;
+            const atm = Math.round(spotPrice / strikeGap) * strikeGap;
+            document.getElementById('atmStrike').value = atm;
+
+            const optionSide = state.optionSide;
+            const optionChain = buildOptionChainFromSpot(spotPrice, strikeGap, premiums, optionSide);
+
+            let rvMean, rvStd, volZ;
+            if (volData && volData.symbol === symbol) {
+                rvMean = volData.rvMean; rvStd = volData.rvStd; volZ = volData.volZ;
+            } else {
+                rvMean = fairVol * 0.9; rvStd = fairVol * 0.15; volZ = (fairVol - rvMean) / rvStd;
+            }
+            
+            let volRegime, volScaler;
+            if (volZ > 0.5) { volRegime = 'FAVORABLE'; volScaler = 1.0; }
+            else if (volZ > 0) { volRegime = 'NEUTRAL'; volScaler = 0.6; }
+            else { volRegime = 'UNFAVORABLE'; volScaler = 0; }
+
+            const volSource = (volData && volData.symbol === symbol) ? ' (LIVE)' : ' (EST)';
+            document.getElementById('vFairVol').textContent = (fairVol * 100).toFixed(1) + '%';
+            document.getElementById('vRvMean').textContent = (rvMean * 100).toFixed(1) + '%' + volSource;
+            document.getElementById('vZScore').textContent = volZ.toFixed(2);
+            const regimeClass = volRegime === 'FAVORABLE' ? 'regime-favorable' : volRegime === 'NEUTRAL' ? 'regime-neutral' : 'regime-unfavorable';
+            document.getElementById('vRegime').innerHTML = `<span class="regime-badge ${regimeClass}">${volRegime}</span>`;
+
+            const chainData = [];
+            optionChain.forEach(opt => {
+                const iv = impliedVol(opt.premium, spotPrice, opt.strike, T, riskFreeRate, optionSide);
+                const { delta, gamma, probItm } = bsPrice(spotPrice, opt.strike, T, riskFreeRate, fairVol, optionSide);
+                chainData.push({ strike: opt.strike, premium: opt.premium, iv, ivEdge: iv - fairVol, delta, gamma, probItm, moneyness: getMoneyness(opt.strike, spotPrice, optionSide, strikeGap) });
+            });
+
+            let spreadResult;
+            try { spreadResult = pickSpread(chainData, state.bias, optionSide); }
+            catch (err) { alert(err.message); return; }
+            
+            const { structure, isCredit, sellLeg, buyLeg } = spreadResult;
+            const width = Math.abs(sellLeg.strike - buyLeg.strike);
+            const netPerShareRaw = sellLeg.premium - buyLeg.premium;
+
+            let netPerShare, maxProfitPerShare, maxLossPerShare;
+            if (isCredit) {
+                if (netPerShareRaw <= 0) { alert('Credit spread error'); return; }
+                netPerShare = netPerShareRaw; maxProfitPerShare = netPerShare; maxLossPerShare = width - netPerShare;
+            } else {
+                if (netPerShareRaw >= 0) { alert('Debit spread error'); return; }
+                netPerShare = -netPerShareRaw; maxProfitPerShare = width - netPerShare; maxLossPerShare = netPerShare;
+            }
+
+            const netPremiumForDisplay = netPerShareRaw * lotSize;
+            const capitalAtRisk = totalCapital * riskPerTrade * volScaler;
+            const contracts = Math.max(1, Math.floor(capitalAtRisk / (maxLossPerShare * lotSize)));
+            const totalMaxProfit = maxProfitPerShare * lotSize * contracts;
+            const totalMaxLoss = maxLossPerShare * lotSize * contracts;
+            const rrRatio = totalMaxProfit / totalMaxLoss;
+
+            document.getElementById('mSpot').textContent = '₹' + spotPrice.toLocaleString();
+            document.getElementById('mATM').textContent = atm;
+            document.getElementById('mDTE').textContent = daysToExpiry + 'D';
+            document.getElementById('mContracts').textContent = contracts;
+            document.getElementById('mRR').textContent = rrRatio.toFixed(2) + ':1';
+
+            const tbody = document.getElementById('chainTable');
+            tbody.innerHTML = '';
+            chainData.forEach(row => {
+                const isSell = row.strike === sellLeg.strike, isBuy = row.strike === buyLeg.strike;
+                const tr = document.createElement('tr');
+                if (isSell) tr.className = 'sell-row';
+                if (isBuy) tr.className = 'buy-row';
+                const badgeClass = row.moneyness === 'ATM' ? 'badge-atm' : row.moneyness === 'OTM' ? 'badge-otm' : 'badge-itm';
+                const edgeColor = row.ivEdge > 0.05 ? 'color: var(--accent-green)' : row.ivEdge > 0 ? 'color: var(--accent-yellow)' : 'color: var(--accent-red)';
+                tr.innerHTML = `<td>${row.strike}</td><td><span class="moneyness-badge ${badgeClass}">${row.moneyness}</span></td><td class="right">₹${row.premium.toFixed(2)}</td><td class="right">${(row.iv * 100).toFixed(1)}%</td><td class="right" style="${edgeColor}; font-weight: 600;">${row.ivEdge > 0 ? '+' : ''}${(row.ivEdge * 100).toFixed(2)}%</td><td class="right">${row.delta.toFixed(3)}</td><td class="right">${row.gamma.toFixed(4)}</td><td class="right">${(row.probItm * 100).toFixed(1)}%</td><td>${isSell ? '<span class="action-tag tag-sell">SELL</span>' : isBuy ? '<span class="action-tag tag-buy">BUY</span>' : ''}</td>`;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('tSymbol').textContent = symbol;
+            document.getElementById('tBias').textContent = state.bias;
+            document.getElementById('tBias').style.color = state.bias === 'BULLISH' ? 'var(--accent-green)' : 'var(--accent-red)';
+            document.getElementById('tSide').textContent = optionSide + ' SPREAD';
+            document.getElementById('tSide').style.color = optionSide === 'CALL' ? 'var(--accent-blue)' : 'var(--accent-purple)';
+            document.getElementById('tStrategyBadge').innerHTML = `<span class="strategy-badge ${isCredit ? 'bullish-put' : 'bearish-call'}">${structure.replace(/_/g, ' ')}</span>`;
+            document.getElementById('tSellStrike').textContent = sellLeg.strike;
+            document.getElementById('tBuyStrike').textContent = buyLeg.strike;
+            
+            const absNetPremium = Math.abs(netPremiumForDisplay).toLocaleString('en-IN');
+            document.getElementById('tNetPremium').innerHTML = isCredit ? `<span style="color: var(--accent-green);">+₹${absNetPremium}</span> <span class="credit-tag">CR</span>` : `<span style="color: var(--accent-orange);">-₹${absNetPremium}</span> <span class="debit-tag">DR</span>`;
+            
+            document.getElementById('tWidth').textContent = '₹' + (width * lotSize).toLocaleString('en-IN');
+            document.getElementById('tContracts').textContent = contracts;
+            document.getElementById('tMaxProfit').textContent = '₹' + totalMaxProfit.toLocaleString('en-IN');
+            document.getElementById('tMaxLoss').textContent = '₹' + totalMaxLoss.toLocaleString('en-IN');
+            document.getElementById('tRRText').textContent = rrRatio.toFixed(2) + ':1';
+            document.getElementById('rrBar').style.width = Math.min(rrRatio * 40, 100) + '%';
+            document.getElementById('tCapRisk').textContent = '₹' + capitalAtRisk.toLocaleString('en-IN');
+            document.getElementById('tVolScaler').textContent = volScaler.toFixed(1) + 'x';
+
+            const strikeChainEl = document.getElementById('strikeChain');
+            strikeChainEl.innerHTML = '';
+            optionChain.forEach(opt => {
+                const chip = document.createElement('span');
+                const moneyness = getMoneyness(opt.strike, spotPrice, optionSide, strikeGap);
+                chip.className = `strike-chip ${moneyness === 'ATM' ? 'atm' : moneyness === 'ITM' ? 'itm' : 'otm'}`;
+                chip.textContent = opt.strike;
+                strikeChainEl.appendChild(chip);
+            });
+
+            const dataSourceLabel = (volData && volData.symbol === symbol) ? 'LIVE (Yahoo Finance)' : 'MANUAL';
+            document.getElementById('terminal').innerHTML = `<span class="terminal-line">================ OPTION SELLING SYSTEM ================</span>
+<span class="terminal-line">Symbol            : ${symbol}</span>
+<span class="terminal-line">Spot Price        : ${spotPrice}</span>
+<span class="terminal-line">Bias              : ${state.bias}</span>
+<span class="terminal-line">Option Side       : ${optionSide}</span>
+<span class="terminal-line">Structure         : ${structure}</span>
+<span class="terminal-line dim">-------------------------------------------------------</span>
+<span class="terminal-line" style="color: var(--accent-blue);">Data Source       : ${dataSourceLabel}</span>
+<span class="terminal-line">Fair Vol          : ${(fairVol * 100).toFixed(2)}%</span>
+<span class="terminal-line">RV Mean (60d)     : ${(rvMean * 100).toFixed(2)}%</span>
+<span class="terminal-line">Vol Z-Score       : ${volZ.toFixed(2)}</span>
+<span class="terminal-line">Vol Regime        : ${volRegime}</span>
+<span class="terminal-line dim">-------------------------------------------------------</span>
+<span class="terminal-line">Sell Strike       : ${sellLeg.strike}</span>
+<span class="terminal-line">Buy Strike        : ${buyLeg.strike}</span>
+<span class="terminal-line">Net Premium (₹)   : ${netPremiumForDisplay.toFixed(2)} ${isCredit ? 'credit' : 'debit'}</span>
+<span class="terminal-line">Width (₹)         : ${(width * lotSize).toLocaleString('en-IN')}</span>
+<span class="terminal-line" style="color: var(--accent-green);">Max Profit (₹)    : ${totalMaxProfit.toLocaleString('en-IN')}</span>
+<span class="terminal-line" style="color: var(--accent-red);">Max Loss (₹)      : ${totalMaxLoss.toLocaleString('en-IN')}</span>
+<span class="terminal-line">Contracts         : ${contracts}</span>
+<span class="terminal-line">=======================================================</span>`;
+
+            drawPayoffChart(sellLeg.strike, buyLeg.strike, netPerShareRaw, lotSize * contracts, spotPrice, optionSide);
+        }
+
+        function drawPayoffChart(sellStrike, buyStrike, netPremiumPerShare, multiplier, spotPrice, optionType) {
+            const lowerStrike = Math.min(sellStrike, buyStrike);
+            const upperStrike = Math.max(sellStrike, buyStrike);
+            const width = upperStrike - lowerStrike;
+            const minPrice = lowerStrike - width * 2;
+            const maxPrice = upperStrike + width * 2;
+            const step = (maxPrice - minPrice) / 100;
+
+            const labels = [], payoffs = [];
+            for (let price = minPrice; price <= maxPrice; price += step) {
+                labels.push(price.toFixed(0));
+                let pnl;
+                if (optionType === 'PUT') {
+                    pnl = (netPremiumPerShare - Math.max(sellStrike - price, 0) + Math.max(buyStrike - price, 0)) * multiplier;
+                } else {
+                    pnl = (netPremiumPerShare - Math.max(price - sellStrike, 0) + Math.max(price - buyStrike, 0)) * multiplier;
+                }
+                payoffs.push(pnl);
+            }
+
+            const ctx = document.getElementById('payoffChart').getContext('2d');
+            if (payoffChart) payoffChart.destroy();
+
+            payoffChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'P&L at Expiry',
+                        data: payoffs,
+                        borderColor: '#4a9eff',
+                        borderWidth: 2,
+                        backgroundColor: (context) => {
+                            const chart = context.chart;
+                            const {ctx, chartArea} = chart;
+                            if (!chartArea) return null;
+                            const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                            gradient.addColorStop(0, 'rgba(255, 71, 87, 0.2)');
+                            gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0)');
+                            gradient.addColorStop(1, 'rgba(0, 212, 170, 0.2)');
+                            return gradient;
+                        },
+                        fill: true,
+                        tension: 0.1,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1a1a24',
+                            borderColor: '#2a2a3a',
+                            borderWidth: 1,
+                            callbacks: { label: (ctx) => 'P&L: ₹' + ctx.parsed.y.toLocaleString('en-IN') }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'SPOT PRICE AT EXPIRY', color: '#5a5a6a', font: { size: 10 } },
+                            ticks: { color: '#5a5a6a', maxTicksLimit: 8 },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'P&L (₹)', color: '#5a5a6a', font: { size: 10 } },
+                            ticks: { color: '#5a5a6a', callback: (v) => '₹' + (v/1000).toFixed(0) + 'K' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize
+        setBias('BEARISH');
+    </script>
+</body>
+</html>
